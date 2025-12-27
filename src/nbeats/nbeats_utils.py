@@ -73,26 +73,34 @@ class EarlyStopping:
     if self.best_loss - val_loss > self.min_delta:
       self.best_loss = val_loss
       self.counter = 0
+      print(f'Validation loss decreased ({self.best_loss:.6f}). Saving model ...')
       torch.save(model.cpu().state_dict(), self.path)
     else:
       self.counter += 1
+      print(f'EarlyStopping counter: {self.counter} out of {self.patience}')
       if self.counter >= self.patience:
         self.early_stop = True
         if self.restore_best_model:
           model.load_state_dict(torch.load(self.path))
 
 # Fungsi Plotting (Progression Plot)
-def progression_plot(epoch_history, train_loss_history, val_loss_history, save_path=None, log_scale=False):
+def progression_plot(epoch_history, train_loss_history, val_loss_history=None, save_path=None, log_scale=False):
   plt.figure(figsize=(10, 6))
   
   plt.plot(epoch_history, train_loss_history, label='Train Loss', marker='o')
-  plt.plot(epoch_history, val_loss_history, label='Validation Loss', marker='x')
+  if val_loss_history is not None:
+    plt.plot(epoch_history, val_loss_history, label='Validation Loss', marker='x')
   
   if log_scale:
     plt.yscale("log")
   
-  plt.text(epoch_history[-1], val_loss_history[-1], f"{val_loss_history[-1]:.4f}", fontsize=9)
-  
+  if val_loss_history is not None:
+    plt.text(epoch_history[-1], val_loss_history[-1],
+             f"{val_loss_history[-1]:.4f}", fontsize=9)
+  else:
+    plt.text(epoch_history[-1], train_loss_history[-1],
+             f"{train_loss_history[-1]:.4f}", fontsize=9)
+    
   plt.xlabel('Epoch')
   plt.ylabel('Loss (MSE / MAE / MAPE)')
   plt.title(f'Loss Progression up to Epoch {epoch_history[-1]}')
